@@ -635,8 +635,48 @@ def render_sitrep_tab(districts_geojson: dict):
         m = create_choropleth_map(st.session_state.sitrep_data, districts_geojson, metric=selected_metric)
         components.html(m._repr_html_(), height=620)
         
-        # Legend below map
+        # Legend directly below map (no extra spacing)
         st.markdown(f"**Legend ({selected_label}):** {get_legend_html(selected_metric)}", unsafe_allow_html=True)
+        
+        # Download GeoJSON button
+        if st.session_state.sitrep_data:
+            import copy
+            # Create GeoJSON with district polygons and sitrep data
+            geojson_export = copy.deepcopy(districts_geojson)
+            district_data_lookup = {d["district"]: d for d in st.session_state.sitrep_data.get("districts", [])}
+            
+            for feature in geojson_export["features"]:
+                district_name = feature["properties"].get("district", "")
+                if district_name in district_data_lookup:
+                    feature["properties"].update(district_data_lookup[district_name])
+            
+            # Add metadata
+            geojson_export["metadata"] = st.session_state.sitrep_data.get("metadata", {})
+            geojson_export["totals"] = st.session_state.sitrep_data.get("totals", {})
+            
+            geojson_str = json.dumps(geojson_export, indent=2, ensure_ascii=False)
+            
+            # Generate filename with sitrep date
+            metadata = st.session_state.sitrep_data.get("metadata", {})
+            report_date = metadata.get("report_date", "")
+            if report_date:
+                # Parse and format date for filename (e.g., 2025-12-07_1200)
+                try:
+                    dt = datetime.fromisoformat(report_date)
+                    date_suffix = dt.strftime("%Y-%m-%d_%H%M")
+                except:
+                    date_suffix = datetime.now().strftime("%Y-%m-%d_%H%M")
+            else:
+                date_suffix = datetime.now().strftime("%Y-%m-%d_%H%M")
+            
+            filename = f"sitrep_{date_suffix}.geojson"
+            
+            st.download_button(
+                label="📥 Download GeoJSON",
+                data=geojson_str,
+                file_name=filename,
+                mime="application/geo+json",
+            )
     
     # District table at bottom
     st.divider()
