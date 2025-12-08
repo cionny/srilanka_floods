@@ -3,14 +3,11 @@ __pycache__/
 *.py[cod]
 .env
 
-# Keep only hf_space
-/*
-!/.gitignore
-!/hf_space/
-
 # Exclude the archive folder
 archive/
 
-# Exclude PDFs and JSON data files from hf_space
-hf_space/data/sitreps/*.pdf
-hf_space/data/sitreps/*.json
+# Exclude PDFs and large JSON data files
+data/sitreps/*.pdf
+
+# Output files (generated)
+output/
