@@ -90,19 +90,6 @@ hf_space/
     └── sitreps/
         └── .gitkeep       # Historical data stored here
 ```
-
----
-
-## Limitations vs Cloudflare Approach
-
-| Feature | HF-Only | Cloudflare + HF |
-|---------|---------|-----------------|
-| Custom domain | ❌ | ✅ |
-| CDN performance | ❌ | ✅ |
-| Persistent KV storage | ⚠️ File-based | ✅ |
-| Complexity | Simple ✅ | Complex |
-| Maintenance | Single place ✅ | Two systems |
-
 ---
 
 ## Fallback: VLM Extraction

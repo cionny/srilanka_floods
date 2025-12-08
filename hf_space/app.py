@@ -246,7 +246,7 @@ def create_choropleth_map(data: dict | None, districts_geojson: dict, metric: st
     
     # Get metric config for formatting
     metric_config = METRIC_CONFIG.get(metric, METRIC_CONFIG["people_affected"])
-    metric_label = metric_config["label"].split(" ", 1)[1]  # Remove emoji
+    metric_label = metric_config["label"]  # Use full label
     
     # Add each feature individually with inline style (avoids function serialization)
     for feature in geojson_copy["features"]:
@@ -344,14 +344,57 @@ def get_legend_html(metric: str) -> str:
 # DISPLAY HELPER FUNCTIONS
 # ============================================================
 
-def display_sitrep_stats(data: dict | None, previous_data: dict | None = None) -> None:
-    """Display situation report statistics with comparison to previous report."""
+def display_sitrep_stats(data: dict | None, previous_data: dict | None = None, selected_district: str = "All Districts") -> None:
+    """Display situation report statistics with comparison to previous report.
+    
+    Args:
+        data: Current sitrep data
+        previous_data: Previous sitrep data for comparison
+        selected_district: District to filter by, or "All Districts" for totals
+    """
     if data is None:
         st.warning("No data available. Click refresh to fetch.")
         return
     
-    totals = data.get("totals", {})
-    prev_totals = previous_data.get("totals", {}) if previous_data else {}
+    # Get data based on district filter
+    if selected_district == "All Districts":
+        # Use totals
+        totals = data.get("totals", {})
+        prev_totals = previous_data.get("totals", {}) if previous_data else {}
+        districts_affected = totals.get("districts_affected", 0)
+    else:
+        # Find the specific district data
+        district_data = next(
+            (d for d in data.get("districts", []) if d.get("district") == selected_district),
+            {}
+        )
+        prev_district_data = {}
+        if previous_data:
+            prev_district_data = next(
+                (d for d in previous_data.get("districts", []) if d.get("district") == selected_district),
+                {}
+            )
+        
+        # Map district fields to totals format
+        totals = {
+            "districts_affected": 1 if district_data else 0,
+            "total_people_affected": district_data.get("people_affected", 0),
+            "total_deaths": district_data.get("deaths", 0),
+            "total_missing": district_data.get("missing", 0),
+            "total_people_displaced": district_data.get("people_displaced", 0),
+            "total_houses_fully_damaged": district_data.get("houses_fully_damaged", 0),
+            "total_houses_partially_damaged": district_data.get("houses_partially_damaged", 0),
+        }
+        prev_totals = {
+            "districts_affected": 1 if prev_district_data else 0,
+            "total_people_affected": prev_district_data.get("people_affected", 0),
+            "total_deaths": prev_district_data.get("deaths", 0),
+            "total_missing": prev_district_data.get("missing", 0),
+            "total_people_displaced": prev_district_data.get("people_displaced", 0),
+            "total_houses_fully_damaged": prev_district_data.get("houses_fully_damaged", 0),
+            "total_houses_partially_damaged": prev_district_data.get("houses_partially_damaged", 0),
+        } if prev_district_data else {}
+        districts_affected = 1
     
     def get_delta(key: str) -> int | None:
         """Calculate delta between current and previous value."""
@@ -361,20 +404,47 @@ def display_sitrep_stats(data: dict | None, previous_data: dict | None = None) -
         previous = prev_totals.get(key, 0)
         return current - previous if previous else None
     
-    col1, col2 = st.columns(2)
+    def format_delta(delta: int | None) -> str | None:
+        """Format delta with sign and comma separators."""
+        if delta is None:
+            return None
+        return f"{delta:+,}" if abs(delta) < 1000000 else f"{delta:+,.0f}"
+    
+    # Horizontal layout - all 7 metrics in one row
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+    
     with col1:
+        # Show district name if filtered, otherwise show districts affected count
+        if selected_district == "All Districts":
+            st.metric(
+                "Districts Affected", 
+                totals.get("districts_affected", 0),
+                delta=get_delta("districts_affected"),
+                delta_color="inverse"
+            )
+        else:
+            st.metric(
+                "District", 
+                selected_district,
+            )
+    
+    with col2:
         st.metric(
-            "Districts Affected", 
-            totals.get("districts_affected", 0),
-            delta=get_delta("districts_affected"),
-            delta_color="inverse"  # More districts = worse
+            "People Affected", 
+            f"{totals.get('total_people_affected', 0):,}",
+            delta=format_delta(get_delta('total_people_affected')),
+            delta_color="inverse"
         )
+    
+    with col3:
         st.metric(
             "Deaths", 
             totals.get("total_deaths", 0),
             delta=get_delta("total_deaths"),
-            delta_color="inverse"  # More deaths = worse
+            delta_color="inverse"
         )
+    
+    with col4:
         st.metric(
             "Missing", 
             totals.get("total_missing", 0),
@@ -382,63 +452,56 @@ def display_sitrep_stats(data: dict | None, previous_data: dict | None = None) -
             delta_color="inverse"
         )
     
-    with col2:
-        st.metric(
-            "People Affected", 
-            f"{totals.get('total_people_affected', 0):,}",
-            delta=f"{get_delta('total_people_affected'):,}" if get_delta('total_people_affected') else None,
-            delta_color="inverse"
-        )
-        st.metric(
-            "Families Affected", 
-            f"{totals.get('total_families_affected', 0):,}",
-            delta=f"{get_delta('total_families_affected'):,}" if get_delta('total_families_affected') else None,
-            delta_color="inverse"
-        )
+    with col5:
         st.metric(
             "People Displaced", 
             f"{totals.get('total_people_displaced', 0):,}",
-            delta=f"{get_delta('total_people_displaced'):,}" if get_delta('total_people_displaced') else None,
+            delta=format_delta(get_delta('total_people_displaced')),
             delta_color="inverse"
         )
     
-    # Housing damage with deltas
-    fully_damaged = totals.get('total_houses_fully_damaged', 0)
-    partially_damaged = totals.get('total_houses_partially_damaged', 0)
-    fully_delta = get_delta('total_houses_fully_damaged')
-    partially_delta = get_delta('total_houses_partially_damaged')
+    with col6:
+        st.metric(
+            "Houses Fully Damaged", 
+            f"{totals.get('total_houses_fully_damaged', 0):,}",
+            delta=format_delta(get_delta('total_houses_fully_damaged')),
+            delta_color="inverse"
+        )
     
-    st.markdown("**🏠 Housing Damage:**")
-    
-    fully_text = f"- Fully Damaged: {fully_damaged:,}"
-    if fully_delta:
-        arrow = "↑" if fully_delta > 0 else "↓" if fully_delta < 0 else ""
-        fully_text += f" ({'+' if fully_delta > 0 else ''}{fully_delta:,} {arrow})"
-    st.write(fully_text)
-    
-    partially_text = f"- Partially Damaged: {partially_damaged:,}"
-    if partially_delta:
-        arrow = "↑" if partially_delta > 0 else "↓" if partially_delta < 0 else ""
-        partially_text += f" ({'+' if partially_delta > 0 else ''}{partially_delta:,} {arrow})"
-    st.write(partially_text)
+    with col7:
+        st.metric(
+            "Houses Partially Damaged", 
+            f"{totals.get('total_houses_partially_damaged', 0):,}",
+            delta=format_delta(get_delta('total_houses_partially_damaged')),
+            delta_color="inverse"
+        )
 
 
-def display_top_affected(data: dict | None) -> None:
-    """Display top affected districts."""
+def display_top_affected(data: dict | None, metric: str = "people_affected") -> None:
+    """Display top affected districts based on selected metric.
+    
+    Args:
+        data: Sitrep data with districts
+        metric: The metric to sort and display by
+    """
     if data is None or "districts" not in data:
         st.info("No district data available.")
         return
     
+    metric_config = METRIC_CONFIG.get(metric, METRIC_CONFIG["people_affected"])
+    metric_label = metric_config["label"]
+    
     districts = sorted(
         data["districts"],
-        key=lambda x: x.get("people_affected", 0),
+        key=lambda x: x.get(metric, 0),
         reverse=True
     )[:5]
     
     for i, d in enumerate(districts, 1):
+        value = d.get(metric, 0)
+        formatted_value = f"{value:,}" if value >= 1000 else str(value)
         st.markdown(f"**{i}. {d['district']}**")
-        st.caption(f"👥 {d.get('people_affected', 0):,} affected" + 
-                  (f" | 💀 {d.get('deaths', 0)} deaths" if d.get('deaths', 0) > 0 else ""))
+        st.caption(f"{formatted_value} {metric_label.lower()}")
 
 
 def display_district_table(data: dict | None) -> None:
@@ -481,12 +544,8 @@ def display_district_table(data: dict | None) -> None:
 def render_sitrep_tab(districts_geojson: dict):
     """Render the Situation Reports tab."""
     st.header("📊 Flood Situation Reports")
-    st.markdown("""
-    Current flood impact data extracted from official DMC situation reports.
-    Click **Refresh Data** to fetch the latest report.
-    """)
     
-    # Refresh button
+    # Refresh button and report info in a row
     col_btn, col_info = st.columns([1, 3])
     with col_btn:
         if st.button("🔄 Refresh Sitrep Data", use_container_width=True, type="primary"):
@@ -516,45 +575,70 @@ def render_sitrep_tab(districts_geojson: dict):
     
     st.divider()
     
-    # Main content - Map and Stats
-    col1, col2 = st.columns([2, 1])
+    # District filter for summary statistics - small dropdown on the right
+    col_stats_label, col_stats_spacer, col_district_filter = st.columns([2, 4, 2])
     
-    with col1:
-        st.subheader("🗺️ Flood Impact Map")
+    with col_stats_label:
+        st.subheader("📈 Summary Statistics")
+    
+    with col_district_filter:
+        # Build district options
+        district_options = ["All Districts"]
+        if st.session_state.sitrep_data and "districts" in st.session_state.sitrep_data:
+            district_names = sorted([d.get("district", "") for d in st.session_state.sitrep_data["districts"] if d.get("district")])
+            district_options.extend(district_names)
         
-        # Metric selector dropdown
+        selected_district = st.selectbox(
+            "Filter by district:",
+            options=district_options,
+            index=0,
+            key="stats_district_filter",
+        )
+    
+    # Summary Statistics row
+    display_sitrep_stats(
+        st.session_state.sitrep_data, 
+        st.session_state.previous_sitrep_data,
+        selected_district
+    )
+    
+    # Show comparison info below stats
+    if st.session_state.previous_sitrep_data:
+        prev_meta = st.session_state.previous_sitrep_data.get("metadata", {})
+        prev_date = prev_meta.get("report_date_formatted", prev_meta.get("report_date_raw", "Unknown"))
+        st.caption(f"Compared to: {prev_date}")
+    
+    st.divider()
+    
+    # Main content - Map (left) and Controls + Top Affected (right)
+    col_map, col_sidebar = st.columns([2, 1])
+    
+    with col_sidebar:
+        # Metric selector - compact at top of sidebar
         metric_options = {v["label"]: k for k, v in METRIC_CONFIG.items()}
         selected_label = st.selectbox(
             "Select metric to visualize:",
             options=list(metric_options.keys()),
             index=0,
-            key="map_metric_selector"
+            key="map_metric_selector",
         )
         selected_metric = metric_options[selected_label]
         
-        # Create and display map with selected metric
-        m = create_choropleth_map(st.session_state.sitrep_data, districts_geojson, metric=selected_metric)
-        components.html(m._repr_html_(), height=500)
-        
-        # Dynamic legend
-        st.markdown(f"**Legend ({selected_label.split(' ', 1)[1]}):** {get_legend_html(selected_metric)}", unsafe_allow_html=True)
-    
-    with col2:
-        st.subheader("📈 Summary Statistics")
-        display_sitrep_stats(st.session_state.sitrep_data, st.session_state.previous_sitrep_data)
-        
-        # Show comparison info if previous data exists
-        if st.session_state.previous_sitrep_data:
-            prev_meta = st.session_state.previous_sitrep_data.get("metadata", {})
-            prev_date = prev_meta.get("report_date_formatted", prev_meta.get("report_date_raw", "Unknown"))
-            st.caption(f"📅 Compared to: {prev_date}")
-        
         st.divider()
         
-        st.subheader("🔝 Top Affected")
-        display_top_affected(st.session_state.sitrep_data)
+        # Top Affected section
+        st.subheader("Top Affected")
+        display_top_affected(st.session_state.sitrep_data, metric=selected_metric)
     
-    # District table
+    with col_map:
+        # Create and display map with selected metric
+        m = create_choropleth_map(st.session_state.sitrep_data, districts_geojson, metric=selected_metric)
+        components.html(m._repr_html_(), height=620)
+        
+        # Legend below map
+        st.markdown(f"**Legend ({selected_label}):** {get_legend_html(selected_metric)}", unsafe_allow_html=True)
+    
+    # District table at bottom
     st.divider()
     with st.expander("📋 View All District Data", expanded=False):
         display_district_table(st.session_state.sitrep_data)
@@ -706,6 +790,8 @@ def main():
         st.session_state.landslide_data = None
     if "flood_data" not in st.session_state:
         st.session_state.flood_data = None
+    if "selected_metric" not in st.session_state:
+        st.session_state.selected_metric = "people_affected"
     
     # Sidebar
     st.sidebar.title("Monitoring Dashboard")
