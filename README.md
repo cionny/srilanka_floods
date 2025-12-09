@@ -43,7 +43,7 @@ All data is scraped from the official [DMC Sri Lanka website](https://www.dmc.go
 - [Weather Rerports](https://www.dmc.gov.lk/index.php?option=com_dmcreports&view=reports&Itemid=274&report_type_id=2&lang=en)
 - scraper should access latest "weather forecast" and scrape tables in page 3
 
-There are examples of reports inside `hf_space/data/reports`
+There are examples of reports inside `data/reports`
 
 ## Tech Stack
 

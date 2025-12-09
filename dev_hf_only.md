@@ -31,7 +31,7 @@ User → HF Space (Streamlit + Folium)
 
 ### Phase 1: Create Streamlit App
 
-1. Create `hf_space/app.py` with:
+1. Create `app.py` with:
    - Folium choropleth map using `data/districts.geojson`
    - Sidebar with summary stats (deaths, affected, displaced)
    - Refresh button to trigger extraction
@@ -57,17 +57,16 @@ User → HF Space (Streamlit + Folium)
 1. Create Space: `promptaidlabs/srilanka-floods`
 2. Upload files:
    ```
-   hf_space/
-   ├── app.py
-   ├── requirements.txt
-   ├── Dockerfile (or use Streamlit SDK)
-   ├── src/
-   │   ├── extractor.py
-   │   └── scraper.py
-   └── data/
-       ├── districts.geojson
-       └── sitreps/
-           └── latest.json
+      ├── app.py
+      ├── requirements.txt
+      ├── Dockerfile (or use Streamlit SDK)
+      ├── src/
+      │   ├── extractor.py
+      │   └── scraper.py
+      └── data/
+         ├── districts.geojson
+         └── sitreps/
+            └── latest.json
    ```
 3. Set Space to public
 4. Test at `https://huggingface.co/spaces/promptaidlabs/srilanka-floods`
@@ -77,7 +76,6 @@ User → HF Space (Streamlit + Folium)
 ## File Structure
 
 ```
-hf_space/
 ├── app.py                 # Main Streamlit app
 ├── requirements.txt       # streamlit, folium, streamlit-folium, PyMuPDF, etc.
 ├── Dockerfile             # Optional, can use Streamlit SDK
@@ -86,9 +84,9 @@ hf_space/
 │   ├── extractor.py       # Copy from cloudflare/container/src/
 │   └── scraper.py         # Copy from cloudflare/container/src/
 └── data/
-    ├── districts.geojson  # Copy from cloudflare/container/data/
-    └── sitreps/
-        └── .gitkeep       # Historical data stored here
+   ├── districts.geojson  # Copy from cloudflare/container/data/
+   └── sitreps/
+      └── .gitkeep       # Historical data stored here
 ```
 ---
 
@@ -103,7 +101,6 @@ If PDF table extraction fails, VLM approach available:
 ## Quick Start (Local Dev)
 
 ```bash
-cd hf_space
 pip install -r requirements.txt
 streamlit run app.py
 ```

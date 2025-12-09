@@ -1,18 +1,14 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyc
 .env
 
 # Exclude the archive folder
-hf_space/archive/
+archive/
 
-# Exclude PDFs
-hf_space/data/reports/*.pdf
-hf_space/data/sitreps/*.pdf
-
-# Exclude JSON data files (except latest/previous for initial state)
-hf_space/data/sitreps/sitrep_*.json
+# Exclude PDFs and large JSON data files
+data/sitreps/*.pdf
+data/reports/*.pdf
 
 # Output files (generated)
-hf_space/output/
+output/
