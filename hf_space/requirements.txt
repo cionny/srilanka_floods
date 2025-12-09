@@ -19,5 +19,11 @@ beautifulsoup4>=4.12.0
 # SSL handling
 urllib3>=2.0.0
 
+# Environment variables
+python-dotenv>=1.0.0
+
+# LLM APIs (OpenAI as fallback for DeepSeek)
+openai>=1.0.0
+
 # Optional: for HF Spaces persistence
 # huggingface_hub>=0.19.0

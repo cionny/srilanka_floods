@@ -22,6 +22,12 @@ SITREP_PAGE_URL = (
     "option=com_dmcreports&view=reports&Itemid=273&report_type_id=1&lang=en"
 )
 
+# URL for landslide early warning reports
+LANDSLIDE_PAGE_URL = (
+    "https://www.dmc.gov.lk/index.php?"
+    "option=com_dmcreports&view=reports&Itemid=276&report_type_id=5&lang=en"
+)
+
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -172,6 +178,79 @@ def download_pdf(url: str) -> bytes:
     response = requests.get(url, headers=HEADERS, timeout=60, verify=False)
     response.raise_for_status()
     return response.content
+
+
+def get_landslide_report_list(limit: int = 5) -> list[dict]:
+    """
+    Fetch a list of landslide warning report metadata from DMC website.
+    
+    Args:
+        limit: Maximum number of reports to return
+        
+    Returns:
+        List of dictionaries with title, date, time, and pdf_url, ordered newest first.
+    """
+    try:
+        response = requests.get(
+            LANDSLIDE_PAGE_URL, 
+            headers=HEADERS, 
+            timeout=30, 
+            verify=False
+        )
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Error fetching DMC landslide page: {e}")
+        return []
+    
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    reports = []
+    seen_urls = set()
+    
+    # Find all PDF links related to landslide reports
+    for link in soup.find_all("a", href=True):
+        href = link.get("href", "")
+        text = link.get_text(strip=True).lower()
+        
+        # Check if it's a PDF link related to landslide warnings
+        if ".pdf" in href.lower():
+            is_landslide = (
+                "landslide" in href.lower() or 
+                "landslide" in text or
+                "ew_report" in href.lower() or  # Early Warning Report
+                "early warning" in text
+            )
+            if is_landslide:
+                # Make URL absolute if relative
+                pdf_url = href
+                if not pdf_url.startswith("http"):
+                    if pdf_url.startswith("/"):
+                        pdf_url = f"{BASE_URL}{pdf_url}"
+                    else:
+                        pdf_url = f"{BASE_URL}/{pdf_url}"
+                
+                # Skip duplicates
+                if pdf_url in seen_urls:
+                    continue
+                seen_urls.add(pdf_url)
+                
+                # Extract metadata
+                report_info = _extract_report_metadata(link, pdf_url)
+                report_info["report_type"] = "landslide"
+                reports.append(report_info)
+    
+    return reports[:limit]
+
+
+def get_latest_landslide_report() -> dict | None:
+    """
+    Fetch the latest landslide warning report metadata from DMC website.
+    
+    Returns:
+        Dictionary with title, date, time, and pdf_url, or None if not found.
+    """
+    reports = get_landslide_report_list(limit=1)
+    return reports[0] if reports else None
 
 
 # CLI usage for testing
