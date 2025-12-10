@@ -2,11 +2,11 @@
   "metadata": {
     "source": "Disaster Management Center, Sri Lanka",
     "report_type": "Landslide Early Warning",
-    "extracted_at": "2025-12-09T10:56:31.307611",
-    "report_date": "2025-12-08T00:00:00",
-    "report_date_formatted": "December 08, 2025",
-    "pdf_url": "https://www.dmc.gov.lk/images/dmcreports/Landslide_Ew_Report_at_1600hrs_on_2025__1765192019.pdf",
-    "scraped_title": "Landslide Early warning"
+    "extracted_at": "2025-12-10T17:41:23.392822",
+    "report_date": "2025-12-10T00:00:00",
+    "report_date_formatted": "December 10, 2025",
+    "pdf_url": "https://www.dmc.gov.lk/images/dmcreports/Landslide_Ew_Report_at_1600hrs_on_2025__1765365537.pdf",
+    "scraped_title": "Landslide Early Warning"
   },
   "districts": [
     {
@@ -14,18 +14,18 @@
       "level_1_divisions": [],
       "level_2_divisions": [
         "Uva Paranagama",
+        "Hali Ela",
         "Meegahakivula",
         "Badulla",
         "Kandeketiya",
         "Bandarawela",
         "Soranathota",
-        "Hali Ela",
         "Ella",
+        "Haputhale",
         "Lunugala",
         "Welimada",
-        "Haputhale",
-        "Passara",
-        "Haldummulla"
+        "Haldummulla",
+        "Passara"
       ],
       "level_3_divisions": [],
       "level_1_count": 0,
@@ -35,24 +35,10 @@
       "max_level": 2
     },
     {
-      "district": "Galle",
-      "level_1_divisions": [
-        "Yakkalamulla",
-        "Elpitiya"
-      ],
-      "level_2_divisions": [],
-      "level_3_divisions": [],
-      "level_1_count": 2,
-      "level_2_count": 0,
-      "level_3_count": 0,
-      "total_warnings": 2,
-      "max_level": 1
-    },
-    {
       "district": "Gampaha",
       "level_1_divisions": [
-        "Attanagalla",
         "Divulapitiya",
+        "Attanagalla",
         "Mirigama"
       ],
       "level_2_divisions": [],
@@ -68,53 +54,31 @@
       "level_1_divisions": [],
       "level_2_divisions": [],
       "level_3_divisions": [
-        "Hatharaliyadda",
-        "Yatinuwara",
-        "Ududumbara",
-        "Pathahewaheta",
-        "Medadumbara",
+        "Kundasale",
         "Pasbage Korale",
-        "Deltota",
-        "Poojapitiya",
+        "Medadumbara",
         "Ganga Ihala Korale",
+        "Hatharaliyadda",
+        "Pathadumbara",
+        "Doluwa",
         "Panvila",
         "Gangawata Korale",
-        "Udapalatha",
+        "Ududumbara",
+        "Akurana",
+        "Yatinuwara",
         "Harispattuwa",
-        "Kundasale",
-        "Minipe",
-        "Doluwa",
+        "Deltota",
         "Thumpane",
-        "Akurana"
+        "Poojapitiya",
+        "Udapalatha",
+        "Udunuwara",
+        "Minipe",
+        "Pathahewaheta"
       ],
       "level_1_count": 0,
       "level_2_count": 0,
-      "level_3_count": 18,
-      "total_warnings": 18,
-      "max_level": 3
-    },
-    {
-      "district": "Kegalle",
-      "level_1_divisions": [],
-      "level_2_divisions": [
-        "Dehiowita",
-        "Ruwanwella",
-        "Deraniyagala"
-      ],
-      "level_3_divisions": [
-        "Kegalle",
-        "Galigamuwa",
-        "Mawanella",
-        "Bulathkohupitiya",
-        "Aranayaka",
-        "Yatiyanthota",
-        "Rambukkana",
-        "Warakapola"
-      ],
-      "level_1_count": 0,
-      "level_2_count": 3,
-      "level_3_count": 8,
-      "total_warnings": 11,
+      "level_3_count": 20,
+      "total_warnings": 20,
       "max_level": 3
     },
     {
@@ -123,12 +87,12 @@
         "Narammala"
       ],
       "level_2_divisions": [
-        "Alawwa",
-        "Polgahawela"
+        "Polgahawela",
+        "Alawwa"
       ],
       "level_3_divisions": [
-        "Mawathagama",
         "Mallawapitiya",
+        "Mawathagama",
         "Rideegama"
       ],
       "level_1_count": 1,
@@ -142,15 +106,15 @@
       "level_1_divisions": [],
       "level_2_divisions": [],
       "level_3_divisions": [
-        "Naula",
-        "Wilgamuwa",
-        "Pallepola",
-        "Ambanganga Korale",
+        "Rattota",
         "Laggala Pallegama",
         "Ukuwela",
-        "Rattota",
         "Matale",
-        "Yatawatta"
+        "Wilgamuwa",
+        "Pallepola",
+        "Naula",
+        "Yatawatta",
+        "Ambanganga Korale"
       ],
       "level_1_count": 0,
       "level_2_count": 0,
@@ -162,16 +126,16 @@
       "district": "Nuwara Eliya",
       "level_1_divisions": [],
       "level_2_divisions": [
+        "Kothmale East",
+        "Walapane",
+        "Thalawakele",
+        "Nuwara Eliya",
+        "Kothmale West",
+        "Nildandahinna",
+        "Mathurata",
         "Ambagamuwa Korale",
         "Hanguranketha",
-        "Mathurata",
-        "Norwood",
-        "Kothmale West",
-        "Nuwara Eliya",
-        "Thalawakele",
-        "Nildandahinna",
-        "Walapane",
-        "Kothmale East"
+        "Norwood"
       ],
       "level_3_divisions": [],
       "level_1_count": 0,
@@ -183,18 +147,27 @@
     {
       "district": "Ratnapura",
       "level_1_divisions": [
+        "Kiriella",
         "Eheliyagoda",
-        "Openayake"
+        "Balangoda",
+        "Kaltota",
+        "Openayake",
+        "Nivithigala",
+        "Imbulpe",
+        "Ayagama",
+        "Kuruwita",
+        "Kalawana"
       ],
       "level_2_divisions": [
-        "Kahawaththa",
-        "Kolonna and"
+        "Kolonna",
+        "Godakawela",
+        "Kahawaththa"
       ],
       "level_3_divisions": [],
-      "level_1_count": 2,
-      "level_2_count": 2,
+      "level_1_count": 10,
+      "level_2_count": 3,
       "level_3_count": 0,
-      "total_warnings": 4,
+      "total_warnings": 13,
       "max_level": 2
     },
     {
@@ -243,13 +216,13 @@
     }
   ],
   "totals": {
-    "districts_with_warnings": 9,
-    "districts_level_3": 4,
-    "districts_level_2": 5,
-    "districts_level_1": 4,
-    "total_level_1": 8,
-    "total_level_2": 30,
-    "total_level_3": 38,
-    "total_divisions_affected": 76
+    "districts_with_warnings": 7,
+    "districts_level_3": 3,
+    "districts_level_2": 4,
+    "districts_level_1": 3,
+    "total_level_1": 14,
+    "total_level_2": 28,
+    "total_level_3": 32,
+    "total_divisions_affected": 74
   }
 }

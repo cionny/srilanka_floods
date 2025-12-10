@@ -8,7 +8,7 @@ archive/
 
 # Exclude PDFs and large JSON data files
 data/sitreps/*.pdf
-data/reports/*.pdf
+data/examples/*.pdf
 
 # Output files (generated)
 output/

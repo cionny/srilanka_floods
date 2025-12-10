@@ -23,9 +23,11 @@ from src.data_manager import (
     SITREPS_DIR,
     DMC_URLS,
     load_districts_geojson,
+    load_divisions_geojson,
     load_latest_data,
     load_previous_data,
     load_landslide_data,
+    load_flood_data,
 )
 from src.trend_analyzer import generate_trend_summary
 from src.tabs import (
@@ -69,6 +71,13 @@ def main():
         st.error("Districts GeoJSON file not found. Please ensure data/districts.geojson exists.")
         return
     
+    # Load divisions GeoJSON for landslide visualization
+    try:
+        divisions_geojson = load_divisions_geojson()
+    except FileNotFoundError:
+        st.warning("Divisions GeoJSON not found. Landslide map will show district-level data only.")
+        divisions_geojson = None
+    
     # Initialize session state for all data types
     if "sitrep_data" not in st.session_state:
         st.session_state.sitrep_data = load_latest_data()
@@ -77,7 +86,7 @@ def main():
     if "landslide_data" not in st.session_state:
         st.session_state.landslide_data = load_landslide_data()
     if "flood_data" not in st.session_state:
-        st.session_state.flood_data = None
+        st.session_state.flood_data = load_flood_data()
     if "selected_metric" not in st.session_state:
         st.session_state.selected_metric = "people_affected"
     
@@ -97,7 +106,7 @@ def main():
         render_sitrep_tab(districts_geojson)
     
     with tab2:
-        render_landslide_tab(districts_geojson)
+        render_landslide_tab(districts_geojson, divisions_geojson)
     
     with tab3:
         render_flood_tab(districts_geojson)

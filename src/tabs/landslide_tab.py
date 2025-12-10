@@ -8,12 +8,15 @@ import copy
 from datetime import datetime
 import streamlit as st
 import streamlit.components.v1 as components
+import pandas as pd
 
 from src.scraper import get_latest_landslide_report, download_pdf
-from src.landslide_extractor import extract_landslide_data
+from src.landslide_extractor import extract_landslide_data, build_division_lookup
 from src.data_manager import (
     DMC_URLS,
     save_landslide_data,
+    load_divisions_geojson,
+    load_landslide_observations_geojson,
 )
 from src.map_utils import (
     create_landslide_choropleth_map,
@@ -23,14 +26,62 @@ from src.map_utils import (
 
 
 # ============================================================
+# DISPLAY HELPER FUNCTIONS
+# ============================================================
+
+def display_landslide_table(landslide_data: dict | None):
+    """Display a table with all landslide warning data by division."""
+    if not landslide_data:
+        st.info("No landslide data available")
+        return
+    
+    districts = landslide_data.get("districts", [])
+    if not districts:
+        st.info("No district data available")
+        return
+    
+    # Flatten to division level
+    rows = []
+    for district in districts:
+        district_name = district.get("district", "Unknown")
+        for division in district.get("divisions", []):
+            rows.append({
+                "district": district_name,
+                "division": division.get("division", "Unknown"),
+                "warning_level": division.get("warning_level", "Unknown")
+            })
+    
+    if not rows:
+        st.info("No division data available")
+        return
+    
+    # Create DataFrame
+    df = pd.DataFrame(rows)
+    
+    # Rename columns for display
+    df = df.rename(columns={
+        "district": "District",
+        "division": "Division",
+        "warning_level": "Warning Level"
+    })
+    
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+# ============================================================
 # TAB RENDER FUNCTION
 # ============================================================
 
-def render_landslide_tab(districts_geojson: dict):
-    """Render the Landslide Warnings tab."""
+def render_landslide_tab(districts_geojson: dict, divisions_geojson: dict | None = None):
+    """Render the Landslide Warnings tab.
+    
+    Args:
+        districts_geojson: District boundaries GeoJSON for overlay
+        divisions_geojson: Division boundaries GeoJSON for detailed coloring
+    """
     st.header("⛰️ Landslide Early Warning")
     st.markdown(f"""
-    Active landslide warnings by district and division from DMC.  
+    Active landslide warnings by division from DMC.  
     **Source:** [DMC Landslide Reports]({DMC_URLS['landslide']})
     """)
     
@@ -146,9 +197,17 @@ def render_landslide_tab(districts_geojson: dict):
     with col_map:
         st.subheader("🗺️ Landslide Warning Map")
         
+        # Load landslide observations for point layer
+        landslide_observations = load_landslide_observations_geojson()
+        
         # Create and display map
         if st.session_state.landslide_data:
-            m = create_landslide_choropleth_map(st.session_state.landslide_data, districts_geojson)
+            m = create_landslide_choropleth_map(
+                st.session_state.landslide_data, 
+                districts_geojson,
+                divisions_geojson,
+                landslide_observations
+            )
         else:
             m = create_empty_map("Landslide Warnings")
         
@@ -194,3 +253,8 @@ def render_landslide_tab(districts_geojson: dict):
                 file_name=filename,
                 mime="application/geo+json",
             )
+    
+    # Landslide data table at bottom
+    st.divider()
+    with st.expander("📋 View All District Data", expanded=False):
+        display_landslide_table(st.session_state.landslide_data)

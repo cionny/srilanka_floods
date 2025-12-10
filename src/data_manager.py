@@ -20,7 +20,9 @@ else:
 DATA_DIR = BASE_DIR / "data"
 SITREPS_DIR = DATA_DIR / "sitreps"
 LANDSLIDE_DIR = DATA_DIR / "landslide"
+FLOOD_DIR = DATA_DIR / "floods"
 DISTRICTS_GEOJSON = DATA_DIR / "districts.geojson"
+DIVISIONS_GEOJSON = DATA_DIR / "divisions.geojson"
 
 # DMC URLs
 DMC_URLS = {
@@ -41,6 +43,35 @@ def load_districts_geojson() -> dict:
         with open(DISTRICTS_GEOJSON, "r") as f:
             return json.load(f)
     raise FileNotFoundError(f"Districts GeoJSON not found at {DISTRICTS_GEOJSON}")
+
+
+def load_divisions_geojson() -> dict:
+    """Load the divisions GeoJSON file."""
+    divisions_path = DATA_DIR / "geo" / "divisions.geojson"
+    if divisions_path.exists():
+        with open(divisions_path, "r") as f:
+            return json.load(f)
+    raise FileNotFoundError(f"Divisions GeoJSON not found at {divisions_path}")
+
+
+def load_landslide_observations_geojson() -> dict | None:
+    """Load the landslide observations GeoJSON file (point data)."""
+    # Try to find the latest landslide observations file
+    geo_dir = DATA_DIR / "geo"
+    if not geo_dir.exists():
+        return None
+    
+    # Look for files matching the pattern landslides_*.geojson
+    landslide_files = list(geo_dir.glob("landslides_*.geojson"))
+    if not landslide_files:
+        return None
+    
+    # Sort by modification time (newest first) and load the latest
+    landslide_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    latest_file = landslide_files[0]
+    
+    with open(latest_file, "r") as f:
+        return json.load(f)
 
 
 def load_latest_data() -> dict | None:
@@ -69,6 +100,22 @@ def load_landslide_data() -> dict | None:
             return json.load(f)
     return None
 
+def load_flood_data() -> dict | None:
+    """Load the latest flood data if available."""
+    latest_file = FLOOD_DIR / "latest.json"
+    if latest_file.exists():
+        with open(latest_file, "r") as f:
+            return json.load(f)
+    return None
+
+
+def load_geojson(filepath: str) -> dict | None:
+    """Load a GeoJSON file from the given path."""
+    geojson_path = BASE_DIR / filepath if not Path(filepath).is_absolute() else Path(filepath)
+    if geojson_path.exists():
+        with open(geojson_path, "r") as f:
+            return json.load(f)
+    return None
 
 # ============================================================
 # DATA SAVING FUNCTIONS
@@ -91,6 +138,14 @@ def save_landslide_data(data: dict, filename: str) -> Path:
         json.dump(data, f, indent=2, ensure_ascii=False, default=str)
     return filepath
 
+def save_flood_data(data: dict, filename: str) -> Path:
+    """Save flood data to a JSON file in the flood directory."""
+    FLOOD_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = FLOOD_DIR / filename
+    with open(filepath, "w") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+    return filepath
+
 
 # ============================================================
 # DATA FETCHING FUNCTIONS
@@ -105,7 +160,7 @@ def fetch_and_extract_data() -> tuple[dict, dict | None]:
     """
     # Import here to avoid circular imports
     from src.scraper import get_sitrep_list, download_pdf
-    from src.pdf_extractor import extract_sitrep_data
+    from src.sitrep_extractor import extract_sitrep_data
     
     reports = get_sitrep_list(limit=2)
     if not reports:

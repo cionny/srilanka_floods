@@ -56,36 +56,45 @@ def display_sitrep_stats(
     
     # Calculate deltas
     def get_delta(current: int, previous: int) -> str | None:
-        if previous > 0:
-            diff = current - previous
-            return f"{diff:+,}" if diff != 0 else None
+        diff = current - previous
+        if diff != 0:
+            return f"{diff:+,}"
         return None
+    
+    # Helper to safely get numeric values
+    def get_int(d: dict, *keys, default: int = 0) -> int:
+        """Get first matching key as integer."""
+        for key in keys:
+            val = d.get(key)
+            if val is not None:
+                return int(val)
+        return default
     
     col1, col2, col3, col4, col5, col6 = st.columns(6)
     
     # Handle both totals (total_*) and district field names
-    affected = totals.get("total_people_affected", totals.get("people_affected", 0))
-    prev_affected = prev_totals.get("total_people_affected", prev_totals.get("people_affected", 0))
+    affected = get_int(totals, "total_people_affected", "people_affected")
+    prev_affected = get_int(prev_totals, "total_people_affected", "people_affected")
     
-    displaced = totals.get("total_people_displaced", totals.get("people_displaced", 0))
-    prev_displaced = prev_totals.get("total_people_displaced", prev_totals.get("people_displaced", 0))
+    displaced = get_int(totals, "total_people_displaced", "people_displaced")
+    prev_displaced = get_int(prev_totals, "total_people_displaced", "people_displaced")
     
-    deaths = totals.get("total_deaths", totals.get("deaths", 0))
-    prev_deaths = prev_totals.get("total_deaths", prev_totals.get("deaths", 0))
+    deaths = get_int(totals, "total_deaths", "deaths")
+    prev_deaths = get_int(prev_totals, "total_deaths", "deaths")
     
-    missing = totals.get("total_missing", totals.get("missing", 0))
-    prev_missing = prev_totals.get("total_missing", prev_totals.get("missing", 0))
+    missing = get_int(totals, "total_missing", "missing")
+    prev_missing = get_int(prev_totals, "total_missing", "missing")
     
-    fully_damaged = totals.get("total_houses_fully_damaged", totals.get("houses_fully_damaged", 0))
-    prev_fully_damaged = prev_totals.get("total_houses_fully_damaged", prev_totals.get("houses_fully_damaged", 0))
+    fully_damaged = get_int(totals, "total_houses_fully_damaged", "houses_fully_damaged")
+    prev_fully_damaged = get_int(prev_totals, "total_houses_fully_damaged", "houses_fully_damaged")
     
-    partially_damaged = totals.get("total_houses_partially_damaged", totals.get("houses_partially_damaged", 0))
-    prev_partially_damaged = prev_totals.get("total_houses_partially_damaged", prev_totals.get("houses_partially_damaged", 0))
+    partially_damaged = get_int(totals, "total_houses_partially_damaged", "houses_partially_damaged")
+    prev_partially_damaged = get_int(prev_totals, "total_houses_partially_damaged", "houses_partially_damaged")
     
     with col1:
         st.metric(
             "People Affected", 
-            f"{affected:,}",
+            affected,
             delta=get_delta(affected, prev_affected),
             delta_color="inverse"
         )
@@ -93,7 +102,7 @@ def display_sitrep_stats(
     with col2:
         st.metric(
             "People Displaced", 
-            f"{displaced:,}",
+            displaced,
             delta=get_delta(displaced, prev_displaced),
             delta_color="inverse"
         )
@@ -117,7 +126,7 @@ def display_sitrep_stats(
     with col5:
         st.metric(
             "Houses Fully Damaged", 
-            f"{fully_damaged:,}",
+            fully_damaged,
             delta=get_delta(fully_damaged, prev_fully_damaged),
             delta_color="inverse"
         )
@@ -125,7 +134,7 @@ def display_sitrep_stats(
     with col6:
         st.metric(
             "Houses Partially Damaged", 
-            f"{partially_damaged:,}",
+            partially_damaged,
             delta=get_delta(partially_damaged, prev_partially_damaged),
             delta_color="inverse"
         )
@@ -207,6 +216,15 @@ def render_sitrep_tab(districts_geojson: dict):
     Disaster impact data extracted from DMC situation reports.  
     **Source:** [DMC Situation Reports]({DMC_URLS['sitrep']})
     """)
+    
+    # Load previous data from disk if not in session state
+    if st.session_state.get("previous_sitrep_data") is None:
+        try:
+            from src.data_manager import load_previous_data
+            prev_data = load_previous_data()
+            st.session_state.previous_sitrep_data = prev_data
+        except:
+            st.session_state.previous_sitrep_data = None
     
     # Refresh button and report info
     col_btn, col_info = st.columns([1, 3])

@@ -306,6 +306,84 @@ def calculate_totals(districts: list[dict]) -> dict:
     }
 
 
+def build_division_lookup(landslide_data: dict) -> dict:
+    """
+    Build a lookup dictionary mapping division names to their warning levels and district.
+    
+    Args:
+        landslide_data: The extracted landslide data with districts
+        
+    Returns:
+        Dictionary mapping division name (lowercase) to {level, district}
+    """
+    division_lookup = {}
+    
+    for district in landslide_data.get("districts", []):
+        district_name = district.get("district", "")
+        
+        # Level 3 divisions (highest priority)
+        for div in district.get("level_3_divisions", []):
+            div_lower = div.lower().strip()
+            division_lookup[div_lower] = {
+                "level": 3,
+                "district": district_name,
+                "division": div,
+            }
+        
+        # Level 2 divisions (only if not already at higher level)
+        for div in district.get("level_2_divisions", []):
+            div_lower = div.lower().strip()
+            if div_lower not in division_lookup or division_lookup[div_lower]["level"] < 2:
+                division_lookup[div_lower] = {
+                    "level": 2,
+                    "district": district_name,
+                    "division": div,
+                }
+        
+        # Level 1 divisions (only if not already at higher level)
+        for div in district.get("level_1_divisions", []):
+            div_lower = div.lower().strip()
+            if div_lower not in division_lookup:
+                division_lookup[div_lower] = {
+                    "level": 1,
+                    "district": district_name,
+                    "division": div,
+                }
+    
+    return division_lookup
+
+
+def normalize_division_name(name: str) -> str:
+    """
+    Normalize division name for matching against GeoJSON shapeName.
+    
+    Handles common variations in naming conventions.
+    """
+    if not name:
+        return ""
+    
+    name = name.strip().lower()
+    
+    # Remove common suffixes that may differ
+    suffixes_to_remove = [" dsd", " ds", " divisional secretariat"]
+    for suffix in suffixes_to_remove:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+    
+    # Common abbreviation mappings
+    abbrev_mappings = {
+        "n.": "north",
+        "s.": "south",
+        "e.": "east",
+        "w.": "west",
+        "&": "and",
+    }
+    for abbrev, full in abbrev_mappings.items():
+        name = name.replace(abbrev, full)
+    
+    return name.strip()
+
+
 def merge_district_warnings(warnings_list: list[dict]) -> list[dict]:
     """
     Merge warnings for the same district (in case table spans pages).
