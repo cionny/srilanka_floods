@@ -12,3 +12,7 @@ data/examples/*.pdf
 
 # Output files (generated)
 output/
+
+# Heavy geo files
+data/geo/rivers.geojson
+data/geo/water_bodies.geojson

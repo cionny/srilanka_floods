@@ -97,14 +97,15 @@ def render_flood_tab(districts_geojson: dict):
             report_date = metadata.get("report_date_formatted", "Unknown")
             report_time = metadata.get("report_time", "")
             st.info(f"📅 **Last Updated:** {report_date} at {report_time}")
+            if "pdf_url" in metadata:
+                st.markdown(f"[📄 View Original PDF]({metadata['pdf_url']})")
         else:
             st.warning("No flood data loaded. Click refresh to fetch latest data.")
     
     st.divider()
     
-    # Load GeoJSON data for rivers and water bodies
-    rivers_geojson = load_geojson("data/geo/rivers.geojson")
-    water_bodies_geojson = load_geojson("data/geo/water_bodies.geojson")
+    # Load GeoJSON data for monitored rivers
+    monitored_rivers_geojson = load_geojson("data/geo/monitored_rivers.geojson")
     
     # Create map
     col1, col2 = st.columns([2, 1])
@@ -112,13 +113,13 @@ def render_flood_tab(districts_geojson: dict):
     with col1:
         st.subheader("🗺️ River Monitoring Map")
         
-        if rivers_geojson and water_bodies_geojson:
-            m = create_flood_map(flood_data, rivers_geojson, water_bodies_geojson)
+        if monitored_rivers_geojson:
+            m = create_flood_map(flood_data, monitored_rivers_geojson, None)
             components.html(m._repr_html_(), height=600)
             if flood_data:
                 st.caption("Rivers are color-coded by alert status. Hover over rivers to see detailed station information.")
             else:
-                st.caption("Showing rivers and water bodies. Click 'Refresh' to load flood monitoring data.")
+                st.caption("Showing monitored rivers. Click 'Refresh' to load flood monitoring data.")
         else:
             m = create_empty_map("River Monitoring")
             components.html(m._repr_html_(), height=600)

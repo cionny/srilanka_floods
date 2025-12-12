@@ -485,11 +485,11 @@ def create_landslide_choropleth_map(
 def create_flood_map(
     flood_data: dict | None,
     rivers_geojson: dict,
-    water_bodies_geojson: dict
+    water_bodies_geojson: dict | None = None
 ) -> folium.Map:
-    """Create a map for flood warnings showing only monitored rivers.
+    """Create a map for flood warnings showing monitored rivers.
     
-    Only displays rivers/water bodies that match monitored tributaries in flood data.
+    Uses the standard_name property from monitored_rivers.geojson to match with flood data.
     """
     m = folium.Map(
         location=[7.8731, 80.7718],
@@ -497,74 +497,27 @@ def create_flood_map(
         tiles="cartodbpositron"
     )
     
-    # Build station lookup from flood data
+    # Build station lookup from flood data using tributary names
     station_lookup = {}
-    monitored_rivers = set()
     if flood_data:
         for basin_name, stations in flood_data.get("river_basins", {}).items():
             for station in stations:
                 tributary = station.get("tributary", "").strip()
-                station_name = station.get("station", "").strip()
                 if tributary:
                     tributary_lower = tributary.lower()
                     station_lookup[tributary_lower] = station
-                    station_lookup[f"{tributary} {station_name}".lower()] = station
-                    monitored_rivers.add(tributary_lower)
     
-    # Helper function to check if a name matches any monitored river
-    def matches_monitored(name: str) -> tuple[bool, dict | None]:
-        if not name:
-            return False, None
-        name_lower = name.lower()
-        # Try exact match first
-        if name_lower in station_lookup:
-            return True, station_lookup[name_lower]
-        # Try partial match
-        for key, data in station_lookup.items():
-            if name_lower in key or key in name_lower:
-                return True, data
-        return False, None
-    
-    # Add water bodies layer - only those matching monitored rivers
-    for feature in water_bodies_geojson.get("features", []):
-        water_name = feature["properties"].get("name")
-        if not water_name:
-            continue
-        
-        is_monitored, station_data = matches_monitored(water_name)
-        if not is_monitored:
-            continue
-        
-        water_type = feature["properties"].get("fclass", "water")
-        
-        if station_data:
-            remarks = station_data.get("remarks") or "Normal"
-            color = get_flood_alert_color(remarks)
-            tooltip_html = create_flood_tooltip(station_data)
-        else:
-            color = "#4a9eff"
-            tooltip_html = f"<b>{water_name}</b><br>Type: {water_type}"
-        
-        folium.GeoJson(
-            feature,
-            style_function=lambda x, c=color: {
-                "fillColor": c,
-                "color": "#2471d6",
-                "weight": 1,
-                "fillOpacity": 0.4
-            },
-            tooltip=folium.Tooltip(tooltip_html, sticky=True),
-        ).add_to(m)
-    
-    # Add rivers layer - only monitored rivers
+    # Add rivers layer - all rivers from monitored_rivers.geojson
     for feature in rivers_geojson.get("features", []):
+        # Use standard_name for matching with scraped data
+        standard_name = feature["properties"].get("standard_name")
         river_name = feature["properties"].get("name")
-        if not river_name:
+        
+        if not standard_name:
             continue
         
-        is_monitored, station_data = matches_monitored(river_name)
-        if not is_monitored:
-            continue  # Only show monitored rivers
+        # Look up station data using standard_name
+        station_data = station_lookup.get(standard_name.lower())
         
         if station_data:
             # River has monitoring data - color by alert status
@@ -574,16 +527,22 @@ def create_flood_map(
             opacity = 0.9 if remarks not in ["Normal", None] else 0.6
             
             tooltip_html = create_flood_tooltip(station_data)
-            
-            folium.GeoJson(
-                feature,
-                style_function=lambda x, c=color, w=weight, o=opacity: {
-                    "color": c,
-                    "weight": w,
-                    "opacity": o
-                },
-                tooltip=folium.Tooltip(tooltip_html, sticky=True),
-            ).add_to(m)
+        else:
+            # Show river without data in default color
+            color = FLOOD_ALERT_COLORS["Normal"]
+            weight = 2
+            opacity = 0.6
+            tooltip_html = f"<b>{river_name or standard_name}</b><br>No current monitoring data"
+        
+        folium.GeoJson(
+            feature,
+            style_function=lambda x, c=color, w=weight, o=opacity: {
+                "color": c,
+                "weight": w,
+                "opacity": o
+            },
+            tooltip=folium.Tooltip(tooltip_html, sticky=True),
+        ).add_to(m)
     
     # Add legend only when flood data is available
     if flood_data:
